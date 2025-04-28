@@ -8,6 +8,7 @@ import (
 	"person-enricher/internal/repository"
 )
 
+// PersonService represents a person service.
 type PersonService interface {
 	CreatePerson(ctx context.Context, req models.CreatePersonRequest) (models.Person, error)
 	GetPeople(ctx context.Context, filter models.PeopleFilter) ([]models.Person, error)
@@ -16,11 +17,15 @@ type PersonService interface {
 	DeletePerson(ctx context.Context, id string) error
 }
 
+// personService struct represents a person service
 type personService struct {
 	repo     repository.PersonRepository
 	enricher externalapi.EnrichPersonalData
 }
 
+// NewPersonService creates a new instance of personService with the provided repository
+// and data enricher. It returns a PersonService interface, which provides methods for
+// managing person data, including creating, updating, deleting, and retrieving persons.
 func NewPersonService(
 	repo repository.PersonRepository,
 	enricher externalapi.EnrichPersonalData,
@@ -31,7 +36,9 @@ func NewPersonService(
 	}
 }
 
-// CreatePerson creates and enrich person via external API
+// CreatePerson creates a new person with the given name, surname, patronymic, and
+// attempts to enrich the person data with age, gender, and nationality using
+// the external APIs. It returns the created person and an error, if any.
 func (s *personService) CreatePerson(ctx context.Context, req models.CreatePersonRequest) (models.Person, error) {
 	// Get person age, gender, nationality
 	age, err := s.enricher.GetPersonAge(ctx, req.Name)
@@ -61,14 +68,23 @@ func (s *personService) CreatePerson(ctx context.Context, req models.CreatePerso
 
 }
 
+// GetPeople returns a list of people based on the provided filter.
+// It calls the repository List method and returns the result.
 func (s *personService) GetPeople(ctx context.Context, filter models.PeopleFilter) ([]models.Person, error) {
 	return s.repo.List(ctx, filter)
 }
 
+
+// GetPersonByID retrieves a person by their unique identifier.
+// It calls the repository GetByID method with the provided context and id.
+// Returns the person if found, otherwise returns an error.
 func (s *personService) GetPersonByID(ctx context.Context, id string) (models.Person, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
+// UpdatePerson updates a person by their unique identifier.
+// It calls the repository Update method with the provided context and the updated person.
+// Returns the updated person if the update was successful, otherwise returns an error.
 func (s *personService) UpdatePerson(ctx context.Context, id string, req models.UpdatePersonRequest) (models.Person, error) {
 	updated := models.Person{
 		ID:          id,
@@ -82,6 +98,10 @@ func (s *personService) UpdatePerson(ctx context.Context, id string, req models.
 	return s.repo.Update(ctx, updated)
 }
 
+
+// DeletePerson deletes a person by their unique identifier.
+// It calls the repository Delete method with the provided context and id.
+// Returns an error if the deletion fails.
 func (s *personService) DeletePerson(ctx context.Context, id string) error {
 	return s.repo.Delete(ctx, id)
 }

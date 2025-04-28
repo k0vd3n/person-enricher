@@ -6,7 +6,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// NewRouter настраивает все HTTP-эндпоинты и возвращает готовый mux.Router
+// NewRouter returns a new Gorilla Mux router with endpoints:
+//
+// * GET /people: GetPeople
+// * GET /people/{id}: GetPersonByID
+// * POST /people: CreatePerson
+// * PUT /people/{id}: UpdatePerson
+// * DELETE /people/{id}: DeletePerson
 func NewRouter(h *Handler) *mux.Router {
 	r := mux.NewRouter()
 

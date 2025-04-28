@@ -15,32 +15,40 @@ type Handler struct {
 	service service.PersonService
 }
 
-// NewHandler constructor, injects service
+// NewHandler returns a new Handler with the given PersonService
 func NewHandler(s service.PersonService) *Handler {
 	return &Handler{service: s}
 }
 
-// respondError helper for errors
+// respondError writes an error response in JSON format.
+// It sets the Content-Type header to application/json,
+// the status code to the given status, and encodes the error message
+// in the request body as a models.ErrorResponse.
 func respondError(w http.ResponseWriter, status int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(models.ErrorResponse{Error: msg})
 }
 
-// respondJSON helper for successful JSON responses
+// respondJSON writes a JSON response with the given status code and payload.
+// It sets the Content-Type header to application/json, the status code to the given status,
+// and encodes the payload in the request body as a JSON object.
 func respondJSON(w http.ResponseWriter, status int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(payload)
 }
 
-// GetPeople GET /people
 func (h *Handler) GetPeople(w http.ResponseWriter, r *http.Request) {
 	// TODO: read filters/pagination, call h.service.GetPeople(...)
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// GetPersonByID GET /people/{id}
+// GetPersonByID responds to GET /people/{id} requests.
+// It reads the id path parameter, calls h.service.GetPersonByID with the given id,
+// and writes the response as a JSON object with status code 200.
+// If the id is empty, it returns a 400 error.
+// If the person is not found, it returns a 404 error.
 func (h *Handler) GetPersonByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -58,7 +66,13 @@ func (h *Handler) GetPersonByID(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, person)
 }
 
-// CreatePerson POST /people
+// CreatePerson responds to POST /people requests.
+// It reads the JSON body, validates the name and surname fields,
+// calls h.service.CreatePerson with the given request, and writes the response
+// as a JSON object with status code 201.
+// If the body is invalid JSON, it returns a 400 error.
+// If the name or surname is empty, it returns a 400 error.
+// If the person could not be created, it returns a 500 error.
 func (h *Handler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 	var req models.CreatePersonRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -80,7 +94,13 @@ func (h *Handler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusCreated, person)
 }
 
-// UpdatePerson PUT /people/{id}
+// UpdatePerson responds to PUT /people/{id} requests.
+// It reads the JSON body, validates the name, surname, age, gender and nationality fields,
+// calls h.service.UpdatePerson with the given request, and writes the response
+// as a JSON object with status code 200.
+// If the body is invalid JSON, it returns a 400 error.
+// If the name, surname, age, gender or nationality is empty, it returns a 400 error.
+// If the person could not be updated, it returns a 500 error.
 func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 	var req models.UpdatePersonRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -113,7 +133,11 @@ func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, updated)
 }
 
-// DeletePerson DELETE /people/{id}
+// DeletePerson responds to DELETE /people/{id} requests.
+// It reads the id path parameter, calls h.service.DeletePerson with the given id,
+// and writes the response as a JSON object with status code 204.
+// If the id is empty, it returns a 400 error.
+// If the person could not be deleted, it returns a 500 error.
 func (h *Handler) DeletePerson(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]

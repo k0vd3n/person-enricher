@@ -10,6 +10,7 @@ import (
 	"person-enricher/internal/models"
 )
 
+// EnrichPersonalData is an interface for enriching personal data
 type EnrichPersonalData interface {
 	// GetPersonAge returns person age by name
 	GetPersonAge(ctx context.Context, name string) (int, error)
@@ -19,10 +20,14 @@ type EnrichPersonalData interface {
 	GetPersonNationality(ctx context.Context, name string) (string, error)
 }
 
+// personalDataEnricher implements EnrichPersonalData
 type personalDataEnricher struct {
 	client *http.Client
 }
 
+// NewPersonalDataEnricher creates a new instance of personalDataEnricher with a default HTTP client.
+// It returns an EnrichPersonalData interface, which provides methods for enriching personal data
+// such as age, gender, and nationality using external APIs.
 func NewPersonalDataEnricher() EnrichPersonalData {
 	return &personalDataEnricher{
 		client: &http.Client{},
