@@ -68,12 +68,13 @@ func (s *personService) CreatePerson(ctx context.Context, req models.CreatePerso
 
 }
 
-// GetPeople returns a list of people based on the provided filter.
-// It calls the repository List method and returns the result.
 func (s *personService) GetPeople(ctx context.Context, filter models.PeopleFilter) ([]models.Person, error) {
-	return s.repo.List(ctx, filter)
+	people, err := s.repo.List(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("could not list people: %w", err)
+	}
+	return people, nil
 }
-
 
 // GetPersonByID retrieves a person by their unique identifier.
 // It calls the repository GetByID method with the provided context and id.
@@ -97,7 +98,6 @@ func (s *personService) UpdatePerson(ctx context.Context, id string, req models.
 	}
 	return s.repo.Update(ctx, updated)
 }
-
 
 // DeletePerson deletes a person by their unique identifier.
 // It calls the repository Delete method with the provided context and id.

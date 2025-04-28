@@ -30,8 +30,9 @@ type UpdatePersonRequest struct {
 
 // PeopleFilter — parameters for GET /people?page=&size=
 type PeopleFilter struct {
-	Page int
-	Size int
+	Filter string
+	Page   int
+	Size   int
 }
 
 // ErrorResponse — single JSON error response

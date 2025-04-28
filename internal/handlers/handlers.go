@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"person-enricher/internal/models"
 	"person-enricher/internal/service"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -39,9 +40,54 @@ func respondJSON(w http.ResponseWriter, status int, payload interface{}) {
 	json.NewEncoder(w).Encode(payload)
 }
 
+// GetPeople responds to GET /people requests.
+// It reads the page and size query parameters and calls h.service.GetPeople with the given filter.
+// It returns the list of people as a JSON object with status code 200.
+// If the page or size is invalid, it returns a 400 error.
+// If the people could not be fetched, it returns a 500 error.
 func (h *Handler) GetPeople(w http.ResponseWriter, r *http.Request) {
-	// TODO: read filters/pagination, call h.service.GetPeople(...)
-	w.WriteHeader(http.StatusNotImplemented)
+	q := r.URL.Query()
+
+	// фильтр по подстроке
+	filterStr := strings.TrimSpace(q.Get("filter"))
+
+	// page
+	page := 1
+	if p := q.Get("page"); p != "" {
+		if v, err := strconv.Atoi(p); err == nil && v > 0 {
+			page = v
+		} else {
+			respondError(w, http.StatusBadRequest, "invalid page parameter")
+			return
+		}
+	}
+
+	// size
+	size := 10
+	if s := q.Get("size"); s != "" {
+		if v, err := strconv.Atoi(s); err == nil && v > 0 {
+			size = v
+		} else {
+			respondError(w, http.StatusBadRequest, "invalid size parameter")
+			return
+		}
+	}
+
+	// filter
+	pf := models.PeopleFilter{
+		Filter: filterStr,
+		Page:   page,
+		Size:   size,
+	}
+
+	// get people
+	people, err := h.service.GetPeople(r.Context(), pf)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "could not fetch people")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, people)
 }
 
 // GetPersonByID responds to GET /people/{id} requests.
@@ -153,4 +199,3 @@ func (h *Handler) DeletePerson(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
-
