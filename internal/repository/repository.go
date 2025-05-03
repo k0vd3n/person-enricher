@@ -18,9 +18,6 @@ type PersonRepository interface {
 	Delete(ctx context.Context, id string) error
 }
 
-// ErrNotFound is returned when a person is not found in the repository.
-var ErrNotFound = errors.New("person not found")
-
 type GormPersonRepository struct {
 	db *gorm.DB
 }
@@ -83,7 +80,7 @@ func (r *GormPersonRepository) GetByID(ctx context.Context, id string) (models.P
 		Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return models.Person{}, ErrNotFound
+		return models.Person{}, nil
 	} else if err != nil {
 		return models.Person{}, fmt.Errorf("get by id: %w", err)
 	}
@@ -111,17 +108,10 @@ func (r *GormPersonRepository) Update(ctx context.Context, p models.Person) (mod
 // record from the database using the given ID. If the deletion is successful,
 // it returns nil; otherwise, it returns a wrapped error indicating the failure.
 func (r *GormPersonRepository) Delete(ctx context.Context, id string) error {
-	result := r.db.WithContext(ctx).
-		Where("id = ?", id).
-		Delete(&models.Person{})
-
-	if result.Error != nil {
-		return fmt.Errorf("delete person: %w", result.Error)
+	if err := r.db.WithContext(ctx).
+		Delete(&models.Person{}, "id = ?", id).
+		Error; err != nil {
+		return fmt.Errorf("delete person: %w", err)
 	}
-
-	if result.RowsAffected == 0 {
-		return ErrNotFound
-	}
-
 	return nil
 }

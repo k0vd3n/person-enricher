@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	"encoding/json"
@@ -32,15 +32,15 @@ func respondError(w http.ResponseWriter, status int, msg string) {
 }
 
 func toPersonResponse(p models.Person) models.PersonResponse {
-    return models.PersonResponse{
-        ID:          p.ID,
-        Name:        p.Name,
-        Surname:     p.Surname,
-        Patronymic:  p.Patronymic,
-        Age:         p.Age,
-        Gender:      p.Gender,
-        Nationality: p.Nationality,
-    }
+	return models.PersonResponse{
+		ID:          p.ID,
+		Name:        p.Name,
+		Surname:     p.Surname,
+		Patronymic:  p.Patronymic,
+		Age:         p.Age,
+		Gender:      p.Gender,
+		Nationality: p.Nationality,
+	}
 }
 
 // respondJSON writes a JSON response with the given status code and payload.
@@ -110,13 +110,13 @@ func (h *Handler) GetPeople(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetPersonByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
-	if strings.TrimSpace(id) == "" {
-		respondError(w, http.StatusBadRequest, "id is required")
-		return
-	}
 
 	person, err := h.service.GetPersonByID(r.Context(), id)
 	if err != nil {
+		respondError(w, http.StatusInternalServerError, "internal service error")
+		return
+	}
+	if person == (models.Person{}) {
 		respondError(w, http.StatusNotFound, "person not found")
 		return
 	}

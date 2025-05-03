@@ -49,8 +49,8 @@ func main() {
 	svc := service.NewPersonService(repo, enricher)
 
 	// 5) Initialize router
-	handler := api.NewHandler(svc)
-	router := api.NewRouter(handler)
+	handler := handlers.NewHandler(svc)
+	router := handlers.NewRouter(handler)
 
 	// 6) Start HTTP server
 	addr := fmt.Sprintf(":%s", httpPort)

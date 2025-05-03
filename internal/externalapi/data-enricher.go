@@ -20,9 +20,14 @@ type EnrichPersonalData interface {
 	GetPersonNationality(ctx context.Context, name string) (string, error)
 }
 
+// HTTPClient is an interface for making HTTP requests
+type HTTPClient interface {
+    Do(req *http.Request) (*http.Response, error)
+}
+
 // personalDataEnricher implements EnrichPersonalData
 type personalDataEnricher struct {
-	client *http.Client
+	client HTTPClient
 }
 
 // NewPersonalDataEnricher creates a new instance of personalDataEnricher with a default HTTP client.
@@ -43,10 +48,7 @@ func (p *personalDataEnricher) GetPersonAge(ctx context.Context, name string) (i
 	endpoint := fmt.Sprintf("https://api.agify.io/?name=%s", url.QueryEscape(name))
 
 	// Create request
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return 0, fmt.Errorf("could not create agify request: %w", err)
-	}
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 
 	// Send request
 	resp, err := p.client.Do(req)
@@ -81,10 +83,7 @@ func (p *personalDataEnricher) GetPersonGender(ctx context.Context, name string)
 	endpoint := fmt.Sprintf("https://api.genderize.io/?name=%s", url.QueryEscape(name))
 
 	// Create request
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return "", fmt.Errorf("could not create genderize request: %w", err)
-	}
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 
 	// Send request
 	resp, err := p.client.Do(req)
@@ -120,10 +119,7 @@ func (p *personalDataEnricher) GetPersonNationality(ctx context.Context, name st
 	endpoint := fmt.Sprintf("https://api.nationalize.io/?name=%s", url.QueryEscape(name))
 
 	// Create request
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return "", fmt.Errorf("could not create nationalize request: %w", err)
-	}
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 
 	// Send request
 	resp, err := p.client.Do(req)
