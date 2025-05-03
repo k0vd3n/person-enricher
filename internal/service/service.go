@@ -68,6 +68,9 @@ func (s *personService) CreatePerson(ctx context.Context, req models.CreatePerso
 
 }
 
+// GetPeople retrieves a list of people based on the provided filter criteria.
+// It calls the repository List method with the given context and filter.
+// Returns a slice of Person models if successful, otherwise returns an error.
 func (s *personService) GetPeople(ctx context.Context, filter models.PeopleFilter) ([]models.Person, error) {
 	people, err := s.repo.List(ctx, filter)
 	if err != nil {

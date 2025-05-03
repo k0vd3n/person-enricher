@@ -2,13 +2,13 @@ package models
 
 // Person — structure returned by GET /people
 type Person struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Surname     string `json:"surname"`
-	Patronymic  string `json:"patronymic,omitempty"` // теперь просто string
+	ID          string `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
+	Name        string `gorm:"type:varchar(100);not null" json:"name"`
+	Surname     string `gorm:"type:varchar(100);not null" json:"surname"`
+	Patronymic  string `gorm:"type:varchar(100)" json:"patronymic,omitempty"`
 	Age         int    `json:"age,omitempty"`
-	Gender      string `json:"gender,omitempty"`
-	Nationality string `json:"nationality,omitempty"`
+	Gender      string `gorm:"type:varchar(10)" json:"gender,omitempty"`
+	Nationality string `gorm:"type:varchar(2)" json:"nationality,omitempty"`
 }
 
 // CreatePersonRequest — body of POST /people
