@@ -31,6 +31,18 @@ func respondError(w http.ResponseWriter, status int, msg string) {
 	json.NewEncoder(w).Encode(models.ErrorResponse{Error: msg})
 }
 
+func toPersonResponse(p models.Person) models.PersonResponse {
+    return models.PersonResponse{
+        ID:          p.ID,
+        Name:        p.Name,
+        Surname:     p.Surname,
+        Patronymic:  p.Patronymic,
+        Age:         p.Age,
+        Gender:      p.Gender,
+        Nationality: p.Nationality,
+    }
+}
+
 // respondJSON writes a JSON response with the given status code and payload.
 // It sets the Content-Type header to application/json, the status code to the given status,
 // and encodes the payload in the request body as a JSON object.
@@ -109,7 +121,7 @@ func (h *Handler) GetPersonByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, person)
+	respondJSON(w, http.StatusOK, toPersonResponse(person))
 }
 
 // CreatePerson responds to POST /people requests.
@@ -137,7 +149,7 @@ func (h *Handler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusCreated, person)
+	respondJSON(w, http.StatusCreated, toPersonResponse(person))
 }
 
 // UpdatePerson responds to PUT /people/{id} requests.
@@ -176,7 +188,7 @@ func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusOK, updated)
+	respondJSON(w, http.StatusOK, toPersonResponse(updated))
 }
 
 // DeletePerson responds to DELETE /people/{id} requests.
@@ -197,5 +209,6 @@ func (h *Handler) DeletePerson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	// вернуть пользователю информацию, что запись успешно удалена
+	respondJSON(w, http.StatusOK, "the record was successfully deleted")
 }

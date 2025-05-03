@@ -63,8 +63,13 @@ func (s *personService) CreatePerson(ctx context.Context, req models.CreatePerso
 		Nationality: nationality,
 	}
 
-	// Save in repository
-	return s.repo.Create(ctx, person)
+	// Save the person in the repository
+	createdPerson, err := s.repo.Create(ctx, person)
+	if err != nil {
+		return models.Person{}, fmt.Errorf("could not create person: %w", err)
+	}
+
+	return createdPerson, nil
 
 }
 
@@ -83,14 +88,20 @@ func (s *personService) GetPeople(ctx context.Context, filter models.PeopleFilte
 // It calls the repository GetByID method with the provided context and id.
 // Returns the person if found, otherwise returns an error.
 func (s *personService) GetPersonByID(ctx context.Context, id string) (models.Person, error) {
-	return s.repo.GetByID(ctx, id)
+	// Save the person in the repository
+	gotPerson, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return models.Person{}, fmt.Errorf("could not got person: %w", err)
+	}
+
+	return gotPerson, nil
 }
 
 // UpdatePerson updates a person by their unique identifier.
 // It calls the repository Update method with the provided context and the updated person.
 // Returns the updated person if the update was successful, otherwise returns an error.
 func (s *personService) UpdatePerson(ctx context.Context, id string, req models.UpdatePersonRequest) (models.Person, error) {
-	updated := models.Person{
+	updatedPerson := models.Person{
 		ID:          id,
 		Name:        req.Name,
 		Surname:     req.Surname,
@@ -99,12 +110,19 @@ func (s *personService) UpdatePerson(ctx context.Context, id string, req models.
 		Gender:      req.Gender,
 		Nationality: req.Nationality,
 	}
-	return s.repo.Update(ctx, updated)
+	updatedPerson, err := s.repo.Update(ctx, updatedPerson)
+	if err != nil {
+		return models.Person{}, fmt.Errorf("could not update person: %w", err)
+	}
+	return updatedPerson, nil
 }
 
 // DeletePerson deletes a person by their unique identifier.
 // It calls the repository Delete method with the provided context and id.
 // Returns an error if the deletion fails.
 func (s *personService) DeletePerson(ctx context.Context, id string) error {
-	return s.repo.Delete(ctx, id)
+	if err := s.repo.Delete(ctx, id); err != nil {
+		return fmt.Errorf("could not delete person: %w", err)
+	}
+	return nil
 }

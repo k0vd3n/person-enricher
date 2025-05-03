@@ -67,8 +67,8 @@ func (r *GormPersonRepository) List(ctx context.Context, filter models.PeopleFil
 		Offset(offset).
 		Order("id").
 		Find(&people).Error; err != nil {
-			return nil, fmt.Errorf("list people: %w", err)
-		}
+		return nil, fmt.Errorf("list people: %w", err)
+	}
 	return people, nil
 }
 
@@ -96,11 +96,14 @@ func (r *GormPersonRepository) GetByID(ctx context.Context, id string) (models.P
 // for the data to be stored. It returns the updated person and any error
 // encountered during the operation.
 func (r *GormPersonRepository) Update(ctx context.Context, p models.Person) (models.Person, error) {
-	// Save performs an INSERT or UPDATE on primary key
-	if err := r.db.WithContext(ctx).Save(&p).Error; err != nil {
+	if err := r.db.WithContext(ctx).
+		Model(&models.Person{}).
+		Where("id = ?", p.ID).
+		Updates(p).
+		Error; err != nil {
 		return models.Person{}, fmt.Errorf("update person: %w", err)
 	}
-	return p, nil
+	return r.GetByID(ctx, p.ID) // Возвращаем обновлённую запись
 }
 
 // Delete removes a person from the repository by their unique identifier.
@@ -108,10 +111,17 @@ func (r *GormPersonRepository) Update(ctx context.Context, p models.Person) (mod
 // record from the database using the given ID. If the deletion is successful,
 // it returns nil; otherwise, it returns a wrapped error indicating the failure.
 func (r *GormPersonRepository) Delete(ctx context.Context, id string) error {
-	if err := r.db.WithContext(ctx).
-		Delete(&models.Person{}, "id = ?", id).
-		Error; err != nil {
-		return fmt.Errorf("delete person: %w", err)
+	result := r.db.WithContext(ctx).
+		Where("id = ?", id).
+		Delete(&models.Person{})
+
+	if result.Error != nil {
+		return fmt.Errorf("delete person: %w", result.Error)
 	}
+
+	if result.RowsAffected == 0 {
+		return ErrNotFound
+	}
+
 	return nil
 }
