@@ -171,9 +171,9 @@ docker run -d \
 Creating a person:
 
 ```bash
-curl -X POST http://localhost:8080/people \
+curl -X POST http://localhost:8080/v1/people \
   -H "Content-Type: application/json" \
-  -d '{"name":"Dmitriy","surname":"Ushakov"}'
+  -d '{"name":"Dmitry","surname":"Ushakov"}'
 ```
 
 Response:
@@ -181,7 +181,7 @@ Response:
 ```json
 {
   "id":"...",
-  "name":"Dmitriy",
+  "name":"Dmitry",
   "surname":"Ushakov",
   "patronymic":"",
   "age":35,
@@ -193,13 +193,13 @@ Response:
 Listing with filter & pagination:
 
 ```bash
-curl "http://localhost:8080/people?filter=ushakov&page=1&size=5"
+curl "http://localhost:8080/v1/people?filter=ushakov&page=1&size=5"
 ```
 
 Updating a person:
 
 ```bash
-curl -X PUT http://localhost:8080/people/{id} \
+curl -X PUT http://localhost:8080/v1/people/{id} \
   -H "Content-Type: application/json" \
   -d '{"name":"Dmitriy","surname":"Ushakov","patronymic":"","age":36,"gender":"male","nationality":"RU"}'
 ```
@@ -208,7 +208,7 @@ Deleting a person:
 
 
 ```bash
-curl -X DELETE http://localhost:8080/people/{id}
+curl -X DELETE http://localhost:8080/v1/people/{id}
 ```
 
 ## <a name="русская-версия"></a> Русская Версия
@@ -256,6 +256,15 @@ CREATE TABLE people (
 - **GET /people**  — список с фильтром `filter`, пагинацией `page` и `size`.
 - **GET /people/{id}**  — получить по ID.
 - **POST /people**  — создать новую запись.
+
+```json
+{
+  "name": "Dmitriy",
+  "surname": "Ushakov",
+  "patronymic": "Vasilevich"  // optional
+}
+```
+
 - **PUT /people/{id}**  — обновить запись.
 - **DELETE /people/{id}**  — удалить запись.
 
@@ -334,15 +343,41 @@ ENTRYPOINT ["./person-enricher"]
 Создание записи:
 
 ```bash
-curl -X POST http://localhost:8080/people \
+curl -X POST http://localhost:8080/v1/people \
   -H "Content-Type: application/json" \
-  -d '{"name":"Dmitriy","surname":"Ushakov"}'
+  -d '{"name":"Dmitry","surname":"Ushakov"}'
+```
+
+Ответ:
+
+```json
+{
+  "id":"...",
+  "name":"Dmitry",
+  "surname":"Ushakov",
+  "patronymic":"",
+  "age":35,
+  "gender":"male",
+  "nationality":"RU"
+}
+```
+
+Вывод всех записей с фильтрами и пагинацией:
+
+```bash
+curl "http://localhost:8080/v1/people?filter=ushakov&page=1&size=5"
+```
+
+Получение записи по id:
+
+```bash
+curl "http://localhost:8080/v1/people/{id}"
 ```
 
 Обновление:
 
 ```bash
-curl -X PUT http://localhost:8080/people/{id} \
+curl -X PUT http://localhost:8080/v1/people/{id} \
   -H "Content-Type: application/json" \
   -d '{"name":"Dmitriy","surname":"Ushakov","patronymic":"","age":36,"gender":"male","nationality":"RU"}'
 ```
@@ -350,5 +385,5 @@ curl -X PUT http://localhost:8080/people/{id} \
 Удаление:
 
 ```bash
-curl -X DELETE http://localhost:8080/people/{id}
+curl -X DELETE http://localhost:8080/v1/people/{id}
 ```
