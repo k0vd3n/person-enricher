@@ -20,13 +20,13 @@ func NewRouter(h *Handler) *mux.Router {
 	r := mux.NewRouter()
 
 	// Swagger
-	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+	r.PathPrefix("/v1/swagger/").Handler(httpSwagger.WrapHandler)
 
-	r.HandleFunc("/people", h.GetPeople).Methods(http.MethodGet)
-	r.HandleFunc("/people/{id}", h.GetPersonByID).Methods(http.MethodGet)
-	r.HandleFunc("/people", h.CreatePerson).Methods(http.MethodPost)
-	r.HandleFunc("/people/{id}", h.UpdatePerson).Methods(http.MethodPut)
-	r.HandleFunc("/people/{id}", h.DeletePerson).Methods(http.MethodDelete)
+	r.HandleFunc("/v1/people", h.GetPeople).Methods(http.MethodGet)
+	r.HandleFunc("/v1/people/{id}", h.GetPersonByID).Methods(http.MethodGet)
+	r.HandleFunc("/v1/people", h.CreatePerson).Methods(http.MethodPost)
+	r.HandleFunc("/v1/people/{id}", h.UpdatePerson).Methods(http.MethodPut)
+	r.HandleFunc("/v1/people/{id}", h.DeletePerson).Methods(http.MethodDelete)
 
 	return r
 }
