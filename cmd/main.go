@@ -76,7 +76,7 @@ func main() {
 	metricsEnricher := externalapi.NewMetricsEnricher(enricher)
 
 	svc := service.NewPersonService(metricsRepo, metricsEnricher)
-	instrumentedSvc := handlers.NewInstrumentedService(svc)
+	instrumentedSvc := service.NewInstrumentedService(svc)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)

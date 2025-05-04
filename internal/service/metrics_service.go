@@ -1,4 +1,4 @@
-package handlers
+package service
 
 import (
 	"context"
@@ -6,18 +6,17 @@ import (
 
 	"person-enricher/internal/metrics"
 	"person-enricher/internal/models"
-	"person-enricher/internal/service"
 )
 
 // instrumentedService wraps a PersonService and instruments its methods
 type instrumentedService struct {
-	service service.PersonService
+	service PersonService
 }
 
 // NewInstrumentedService creates a new instance of instrumentedService,
 // which wraps an existing PersonService and instruments its methods to
 // collect execution metrics such as method duration.
-func NewInstrumentedService(s service.PersonService) service.PersonService {
+func NewInstrumentedService(s PersonService) PersonService {
 	return &instrumentedService{service: s}
 }
 
