@@ -1,22 +1,23 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"person-enricher/internal/handlers"
 	"person-enricher/internal/externalapi"
+	"person-enricher/internal/handlers"
+	"person-enricher/internal/metrics"
 	"person-enricher/internal/repository"
 	"person-enricher/internal/service"
 )
 
 func main() {
-	// 1) Load environment variables from .env file 
+	// 1) Load environment variables from .env file
 	if err := godotenv.Load(); err != nil {
 		log.Printf("No .env file found, reading environment variables directly")
 	}
@@ -34,7 +35,12 @@ func main() {
 
 	httpPort := os.Getenv("HTTP_PORT")
 	if httpPort == "" {
-		httpPort = "8080"
+		httpPort = ":8080"
+	}
+
+	metricsPort := os.Getenv("METRICS_PORT")
+	if metricsPort == "" {
+		metricsPort = ":8081"
 	}
 
 	// 3) Connect to DB and initialize repository
@@ -43,19 +49,35 @@ func main() {
 		log.Fatalf("failed to connect to DB: %v", err)
 	}
 
-	// 4) Initialize services and handlers 
+	// Initialize handlers metrics
+	metrics.InitMetrics()
+
+	// 4) Initialize services and handlers
 	repo := repository.NewPersonRepository(db)
+	metricsRepo := repository.NewMetricsRepository(repo)
+
 	enricher := externalapi.NewPersonalDataEnricher()
-	svc := service.NewPersonService(repo, enricher)
+	metricsEnricher := externalapi.NewMetricsEnricher(enricher)
+
+	svc := service.NewPersonService(metricsRepo, metricsEnricher)
+	instrumentedSvc := handlers.NewInstrumentedService(svc)
+
+	go func() {
+		metricsRouter := http.NewServeMux()
+		metricsRouter.Handle("/metrics", promhttp.Handler())
+		log.Printf("Metrics server listening on %s", metricsPort)
+		if err := http.ListenAndServe(metricsPort, metricsRouter); err != nil {
+			log.Fatalf("Metrics server failed: %v", err)
+		}
+	}()
 
 	// 5) Initialize router
-	handler := handlers.NewHandler(svc)
+	handler := handlers.NewHandler(instrumentedSvc)
 	router := handlers.NewRouter(handler)
 
 	// 6) Start HTTP server
-	addr := fmt.Sprintf(":%s", httpPort)
-	log.Printf("Server listening on %s …", addr)
-	if err := http.ListenAndServe(addr, router); err != nil {
+	log.Printf("Server listening on %s …", httpPort)
+	if err := http.ListenAndServe(httpPort, router); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}
 }
