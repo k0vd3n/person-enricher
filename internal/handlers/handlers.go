@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"person-enricher/internal/models"
 	"person-enricher/internal/service"
@@ -28,6 +29,7 @@ func NewHandler(s service.PersonService) *Handler {
 func respondError(w http.ResponseWriter, status int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+	log.Printf("handlers.respondError: %s", msg)
 	json.NewEncoder(w).Encode(models.ErrorResponse{Error: msg})
 }
 
@@ -49,6 +51,7 @@ func toPersonResponse(p models.Person) models.PersonResponse {
 func respondJSON(w http.ResponseWriter, status int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+	log.Printf("handlers.respondJSON: %v", payload)
 	json.NewEncoder(w).Encode(payload)
 }
 
@@ -60,7 +63,8 @@ func respondJSON(w http.ResponseWriter, status int, payload interface{}) {
 func (h *Handler) GetPeople(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 
-	// фильтр по подстроке
+	// filter
+	log.Printf("handlers.GetPeople: getting people with filter: %s", q.Get("filter"))
 	filterStr := strings.TrimSpace(q.Get("filter"))
 
 	// page
@@ -69,10 +73,12 @@ func (h *Handler) GetPeople(w http.ResponseWriter, r *http.Request) {
 		if v, err := strconv.Atoi(p); err == nil && v > 0 {
 			page = v
 		} else {
+			log.Printf("handlers.GetPeople: invalid page parameter: %s", p)
 			respondError(w, http.StatusBadRequest, "invalid page parameter")
 			return
 		}
 	}
+	log.Printf("handlers.GetPeople: page: %d", page)
 
 	// size
 	size := 10
@@ -80,10 +86,12 @@ func (h *Handler) GetPeople(w http.ResponseWriter, r *http.Request) {
 		if v, err := strconv.Atoi(s); err == nil && v > 0 {
 			size = v
 		} else {
+			log.Printf("handlers.GetPeople: invalid size parameter: %s", s)
 			respondError(w, http.StatusBadRequest, "invalid size parameter")
 			return
 		}
 	}
+	log.Printf("handlers.GetPeople: size: %d", size)
 
 	// filter
 	pf := models.PeopleFilter{
@@ -91,14 +99,20 @@ func (h *Handler) GetPeople(w http.ResponseWriter, r *http.Request) {
 		Page:   page,
 		Size:   size,
 	}
+	log.Printf("handlers.GetPeople: result people filter: %v", pf)
 
 	// get people
+	log.Printf("handlers.GetPeople: getting people")
+	log.Printf("handlers.GetPeople: send request to service")
 	people, err := h.service.GetPeople(r.Context(), pf)
 	if err != nil {
+		log.Printf("handlers.GetPeople: could not get people: %v", err)
 		respondError(w, http.StatusInternalServerError, "could not fetch people")
 		return
 	}
 
+
+	log.Printf("handlers.GetPeople: got %d people", len(people))
 	respondJSON(w, http.StatusOK, people)
 }
 
@@ -111,12 +125,17 @@ func (h *Handler) GetPersonByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
+	log.Printf("handlers.GetPersonByID: getting person with id: %s", id)
+	log.Printf("handlers.GetPersonByID: send request to service")
 	person, err := h.service.GetPersonByID(r.Context(), id)
 	if err != nil {
+		log.Printf("handlers.GetPersonByID: could not get person: %v", err)
 		respondError(w, http.StatusInternalServerError, "internal service error")
 		return
 	}
+	log.Printf("handlers.GetPersonByID: got person: %v", person)
 	if person == (models.Person{}) {
+		log.Printf("handlers.GetPersonByID: person not found")
 		respondError(w, http.StatusNotFound, "person not found")
 		return
 	}
@@ -132,23 +151,30 @@ func (h *Handler) GetPersonByID(w http.ResponseWriter, r *http.Request) {
 // If the name or surname is empty, it returns a 400 error.
 // If the person could not be created, it returns a 500 error.
 func (h *Handler) CreatePerson(w http.ResponseWriter, r *http.Request) {
+	log.Printf("handlers.CreatePerson: creating person")
 	var req models.CreatePersonRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("handlers.CreatePerson: invalid JSON: %v", err)
 		respondError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	// validate neccessary fields
+	log.Printf("handlers.CreatePerson: validating neccessary fields")
 	if strings.TrimSpace(req.Name) == "" || strings.TrimSpace(req.Surname) == "" {
 		respondError(w, http.StatusBadRequest, "name and surname are required")
 		return
 	}
+	log.Printf("handlers.CreatePerson: name: %s, surname: %s", req.Name, req.Surname)
 
+	log.Printf("handlers.CreatePerson: send request to service")
 	person, err := h.service.CreatePerson(r.Context(), req)
 	if err != nil {
+		log.Printf("handlers.CreatePerson: could not create person: %v", err)
 		respondError(w, http.StatusInternalServerError, "could not create person")
 		return
 	}
 
+	log.Printf("handlers.CreatePerson: person created: %v", person)
 	respondJSON(w, http.StatusCreated, toPersonResponse(person))
 }
 
@@ -160,19 +186,25 @@ func (h *Handler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 // If the name, surname, age, gender or nationality is empty, it returns a 400 error.
 // If the person could not be updated, it returns a 500 error.
 func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
+	log.Printf("handlers.UpdatePerson: updating person")
 	var req models.UpdatePersonRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("handlers.UpdatePerson: invalid JSON: %v", err)
 		respondError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
+	
 	// check id
+	log.Printf("handlers.UpdatePerson: checking id")
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if strings.TrimSpace(id) == "" {
 		respondError(w, http.StatusBadRequest, "id is required")
 		return
 	}
+
 	// validate neccessary fields
+	log.Printf("handlers.UpdatePerson: validating neccessary fields")
 	if strings.TrimSpace(req.Name) == "" ||
 		strings.TrimSpace(req.Surname) == "" ||
 		req.Age <= 0 ||
@@ -181,12 +213,16 @@ func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, "name, surname, age (>0), gender and nationality are required")
 		return
 	}
+	log.Printf("handlers.UpdatePerson: name: %s, surname: %s, age: %d, gender: %s, nationality: %s", req.Name, req.Surname, req.Age, req.Gender, req.Nationality)
 
+	log.Printf("handlers.UpdatePerson: send update request to service")
 	updated, err := h.service.UpdatePerson(r.Context(), id, req)
 	if err != nil {
+		log.Printf("handlers.UpdatePerson: could not update person: %v", err)
 		respondError(w, http.StatusInternalServerError, "could not update person")
 		return
 	}
+	log.Printf("handlers.UpdatePerson: person updated: %v", updated)
 
 	respondJSON(w, http.StatusOK, toPersonResponse(updated))
 }
@@ -197,18 +233,23 @@ func (h *Handler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 // If the id is empty, it returns a 400 error.
 // If the person could not be deleted, it returns a 500 error.
 func (h *Handler) DeletePerson(w http.ResponseWriter, r *http.Request) {
+	log.Printf("handlers.DeletePerson: deleting person")
 	vars := mux.Vars(r)
 	id := vars["id"]
 	if strings.TrimSpace(id) == "" {
+		log.Printf("handlers.DeletePerson: id is required")
 		respondError(w, http.StatusBadRequest, "id is required")
 		return
 	}
 
+	log.Printf("handlers.DeletePerson: send delete request to service")
 	if err := h.service.DeletePerson(r.Context(), id); err != nil {
+		log.Printf("handlers.DeletePerson: could not delete person: %v", err)
 		respondError(w, http.StatusInternalServerError, "could not delete person")
 		return
 	}
 
+	log.Printf("handlers.DeletePerson: person deleted")
 	// вернуть пользователю информацию, что запись успешно удалена
 	respondJSON(w, http.StatusOK, "the record was successfully deleted")
 }
