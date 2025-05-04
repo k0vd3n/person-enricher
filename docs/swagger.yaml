@@ -1,0 +1,269 @@
+---
+openapi: 3.0.1
+info:
+  title: Person Enricher API
+  description: API for managing person information with data enrichment
+  contact: {}
+  version: '1.0'
+servers:
+- url: "//localhost:8080/"
+paths:
+  "/people":
+    get:
+      tags:
+      - people
+      summary: Get list of people
+      description: Get paginated list of people with optional filtering
+      parameters:
+      - name: filter
+        in: query
+        description: Filter substring
+        schema:
+          type: string
+      - name: page
+        in: query
+        description: Page number
+        schema:
+          type: integer
+          default: 1
+      - name: size
+        in: query
+        description: Page size
+        schema:
+          type: integer
+          default: 10
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/models.PersonResponse"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/models.ErrorResponse"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/models.ErrorResponse"
+    post:
+      tags:
+      - people
+      summary: Create new person
+      description: Create new person with basic info
+      requestBody:
+        description: Person data
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/models.CreatePersonRequest"
+        required: true
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/models.PersonResponse"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/models.ErrorResponse"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/models.ErrorResponse"
+      x-codegen-request-body-name: request
+  "/people/{id}":
+    get:
+      tags:
+      - people
+      summary: Get person by ID
+      description: Get person details by ID
+      parameters:
+      - name: id
+        in: path
+        description: Person ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/models.PersonResponse"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/models.ErrorResponse"
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/models.ErrorResponse"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/models.ErrorResponse"
+    put:
+      tags:
+      - people
+      summary: Update person
+      description: Update existing person details
+      parameters:
+      - name: id
+        in: path
+        description: Person ID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Update data
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/models.UpdatePersonRequest"
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/models.PersonResponse"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/models.ErrorResponse"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/models.ErrorResponse"
+      x-codegen-request-body-name: request
+    delete:
+      tags:
+      - people
+      summary: Delete person
+      description: Delete person by ID
+      parameters:
+      - name: id
+        in: path
+        description: Person ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Success message
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/models.ErrorResponse"
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/models.ErrorResponse"
+components:
+  schemas:
+    models.CreatePersonRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: |-
+            required: true
+            example: Ivan
+        patronymic:
+          type: string
+          description: 'example: Ivanovich'
+        surname:
+          type: string
+          description: |-
+            required: true
+            example: Ivanov
+    models.ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+    models.PersonResponse:
+      type: object
+      properties:
+        age:
+          type: integer
+        gender:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        nationality:
+          type: string
+        patronymic:
+          type: string
+        surname:
+          type: string
+    models.UpdatePersonRequest:
+      type: object
+      properties:
+        age:
+          type: integer
+          description: |-
+            required: true
+            minimum: 1
+            example: 30
+        gender:
+          type: string
+          description: |-
+            required: true
+            enum: male,female,other
+            example: male
+        name:
+          type: string
+          description: |-
+            required: true
+            example: Ivan
+        nationality:
+          type: string
+          description: |-
+            required: true
+            example: RU
+        patronymic:
+          type: string
+          description: 'example: Ivanovich'
+        surname:
+          type: string
+          description: |-
+            required: true
+            example: Ivanov
+x-original-swagger-version: '2.0'

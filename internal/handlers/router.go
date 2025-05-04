@@ -3,7 +3,10 @@ package handlers
 import (
 	"net/http"
 
+	_ "person-enricher/docs"
+
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // NewRouter returns a new Gorilla Mux router with endpoints:
@@ -15,6 +18,9 @@ import (
 // * DELETE /people/{id}: DeletePerson
 func NewRouter(h *Handler) *mux.Router {
 	r := mux.NewRouter()
+
+	// Swagger
+	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	r.HandleFunc("/people", h.GetPeople).Methods(http.MethodGet)
 	r.HandleFunc("/people/{id}", h.GetPersonByID).Methods(http.MethodGet)
